@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   const client = new greeterPackage.Greeter(
     process.env.GRPC_SERVER_URL || "localhost:50052",
-    grpc.credentials.createInsecure()
+    grpc.credentials.createSsl()
   );
 
   try {
