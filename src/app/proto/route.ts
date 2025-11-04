@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   const client = new greeterPackage.Greeter(
     process.env.GRPC_SERVER_URL || "localhost:50052",
-    grpc.credentials.createSsl()
+    grpc.credentials.createInsecure()
   );
 
   try {
@@ -57,9 +57,14 @@ export async function POST(request: NextRequest) {
       new Promise((resolve, reject) => {
         client.SayHello(
           { audio_data: audioData },
-          (err: Error | null, response: any) => {
-            if (err) reject(err);
-            else resolve(response);
+          (error: any, response: any) => {
+            if (error) {
+              console.error(error);
+              reject(error); // Reject promise on error to trigger catch block
+            } else {
+              console.log("Response:", response);
+              resolve(response); // Resolve promise with response
+            }
           }
         );
       });

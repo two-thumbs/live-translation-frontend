@@ -30,28 +30,19 @@ export default function Home() {
         const newData = Array.from(event.data) as number[];
         setAudioData(newData);
 
-        const THRESHOLD = 0.048;
-        const isSpeaking = newData.some((value) => Math.abs(value) > THRESHOLD);
+        console.log("Speaking");
 
-        if (isSpeaking) {
-          console.log("Speaking");
+        const response = await fetch("/proto", {
+          method: "POST",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: event.data.buffer,
+        });
 
-          const response = await fetch("/proto", {
-            method: "POST",
-            headers: { "Content-Type": "application/octet-stream" },
-            body: event.data.buffer,
-          });
+        const body = await response.json();
+        console.log(body);
 
-          const body = await response.json();
-          console.log(body);
-
-          setKorean(body.korean);
-          setEnglish(
-            JSON.parse(body.english).message.result.translatedText.toString()
-          );
-        } else {
-          console.log("Not speaking");
-        }
+        setKorean(body.korean);
+        setEnglish(body.english);
       };
 
       source.connect(workletNode);
