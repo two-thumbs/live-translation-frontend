@@ -6,19 +6,16 @@ option java_multiple_files = true;
 option java_outer_classname = "HelloWorldProto";
 option java_package = "io.grpc.examples.helloworld";
 
-// The greeting service definition.
 service Greeter {
-  // Sends a greeting
   rpc SayHello(HelloRequest) returns (HelloReply) {}
 }
 
-// The request message containing the user's name.
 message HelloRequest {
   bytes audio_data = 1;
+  string target_language = 2;
 }
 
-// The response message containing the greetings
 message HelloReply {
   string korean = 1;
-  string english = 2;
+  string target_text = 2;
 }

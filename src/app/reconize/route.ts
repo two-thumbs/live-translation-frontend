@@ -1,46 +1,20 @@
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { NextRequest } from "next/server";
-import protobuf from "protobufjs";
-
-const protoStr = `
-syntax = "proto3";
-
-package helloworld;
-
-option java_multiple_files = true;
-option java_outer_classname = "HelloWorldProto";
-option java_package = "io.grpc.examples.helloworld";
-
-service Greeter {
-  rpc SayHello(HelloRequest) returns (HelloReply) {}
-}
-
-message HelloRequest {
-  bytes audio_data = 1;
-  string target_language = 2;
-}
-
-message HelloReply {
-  string korean = 1;
-  string target_text = 2;
-}
-`;
+import path from "path";
 
 export async function POST(request: NextRequest) {
   const url = new URL(request.url);
   const langParam = url.searchParams.get("lang");
 
-  const packageDefinition = protoLoader.fromJSON(
-    protobuf.parse(protoStr, { keepCase: true }).root,
-    {
-      keepCase: true,
-      longs: String,
-      enums: String,
-      defaults: true,
-      oneofs: true,
-    }
-  );
+  const protoPath = path.join(process.cwd(), "src/proto/hello_world.proto");
+  const packageDefinition = protoLoader.loadSync(protoPath, {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true,
+  });
   const grpcObject = grpc.loadPackageDefinition(packageDefinition);
   const greeterPackage = grpcObject.helloworld as any;
 
