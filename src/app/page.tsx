@@ -84,9 +84,16 @@ export default function Home() {
   }, [selectedLanguage]);
 
   return (
-    <div className="h-screen grid">
-      <div className="m-auto">
-        <div className="text-black bg-white py-1 px-4 rounded-2xl">
+    <div className="h-screen flex flex-col">
+      <div className="mb-auto flex w-min my-8 h-min mx-auto items-center gap-x-4">
+        <div className="text-black bg-white py-1 px-4 rounded-md w-fit mx-auto">
+          <select id="language-select" value={"KOREAN"}>
+            <option>KOREAN</option>
+            {options}
+          </select>
+        </div>
+        <p>➞</p>
+        <div className="text-black bg-white py-1 px-4 rounded-md w-fit mx-auto">
           <select
             id="language-select"
             value={selectedLanguage}
@@ -95,8 +102,12 @@ export default function Home() {
             {options}
           </select>
         </div>
-        <p className="font-bold text-xl">{korean}</p>
-        <p className="font-bold text-xl">{targetText}</p>
+      </div>
+      <div className="mx-auto mt-12 mb-2 w-2/3 h-full bg-neutral-900 rounded-md p-2">
+        <p>{korean}</p>
+      </div>
+      <div className="mx-auto mb-12 w-2/3 h-full bg-neutral-900 rounded-md p-2">
+        <p>{targetText}</p>
       </div>
     </div>
   );
