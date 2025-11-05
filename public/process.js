@@ -16,7 +16,7 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.readRingIndex = 0;
     this.writeRingIndex = 0;
 
-    this.processCallCount = 0; // 호출 횟수 카운트
+    this.processCallCount = 0;
 
     LibSampleRate.create(1, this.inputSampleRate, this.outputSampleRate, {
       converterType: LibSampleRate.ConverterType.SRC_SINC_BEST_QUALITY,
@@ -43,10 +43,10 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.processCallCount++;
 
     const threshold = parameters.threshold[0];
-    // 최소 프레임 수 또는 버퍼가 꽉 찼을 때 처리
+
     if (
       this.getAvailableReadSamples() >= this.inputBufferLength ||
-      this.processCallCount >= 50
+      this.processCallCount >= 20
     ) {
       const samplesToRead = Math.min(
         this.getAvailableReadSamples(),
