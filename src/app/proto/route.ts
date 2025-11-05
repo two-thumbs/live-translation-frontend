@@ -12,28 +12,13 @@ option java_multiple_files = true;
 option java_outer_classname = "HelloWorldProto";
 option java_package = "io.grpc.examples.helloworld";
 
-enum LanguageEnum {
-  ENGLISH = 0;
-  JAPANESE = 1;
-  SIMPLIFIED_CHINESE = 2;
-  TRADITIONAL_CHINESE = 3;
-  VIETNAMESE = 4;
-  THAI = 5;
-  INDONESIAN = 6;
-  FRENCH = 7;
-  SPANISH = 8;
-  RUSSIAN = 9;
-  GERMAN = 10;
-  ITALIAN = 11;
-}
-
 service Greeter {
   rpc SayHello(HelloRequest) returns (HelloReply) {}
 }
 
 message HelloRequest {
   bytes audio_data = 1;
-  LanguageEnum target_language = 2;
+  string target_language = 2;
 }
 
 message HelloReply {

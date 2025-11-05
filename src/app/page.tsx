@@ -6,7 +6,6 @@ import React, { useEffect, useRef, useState } from "react";
 export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
-  const [audioData, setAudioData] = useState<number[]>([]);
   const [korean, setKorean] = useState<string>();
   const [selectedLanguage, setSelectedLanguage] = useState<LanguageEnum>(
     LanguageEnum.ENGLISH
@@ -44,9 +43,6 @@ export default function Home() {
       workletNodeRef.current = workletNode;
 
       workletNode.port.onmessage = async (event) => {
-        const newData = Array.from(event.data) as number[];
-        setAudioData(newData);
-
         console.log("Speaking");
 
         const response = await fetch(`/proto?lang=${selectedLanguage}`, {
@@ -73,20 +69,6 @@ export default function Home() {
       audioContextRef.current?.close();
     };
   }, [selectedLanguage]);
-
-  const data = {
-    labels: audioData.map((_, i) => i),
-    datasets: [
-      {
-        label: "Audio PCM Data",
-        data: audioData,
-        borderColor: "rgba(75,192,192,1)",
-        borderWidth: 1,
-        pointRadius: 0,
-        fill: false,
-      },
-    ],
-  };
 
   return (
     <div className="h-screen grid">
