@@ -85,20 +85,16 @@ export default function Home() {
 
   return (
     <div className="h-screen grid">
-      <div>
-        <label htmlFor="language-select">Choose a language:</label>
-        <select
-          id="language-select"
-          value={selectedLanguage}
-          onChange={handleChange}
-        >
-          {options}
-        </select>
-
-        <p>Selected language enum value: {selectedLanguage}</p>
-      </div>
-
       <div className="m-auto">
+        <div className="text-black bg-white py-1 px-4 rounded-2xl">
+          <select
+            id="language-select"
+            value={selectedLanguage}
+            onChange={handleChange}
+          >
+            {options}
+          </select>
+        </div>
         <p className="font-bold text-4xl">{korean}</p>
         <p className="font-bold text-4xl">{targetText}</p>
       </div>
