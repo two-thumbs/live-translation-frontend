@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const sayHello = (): Promise<{ korean: string; english: string }> =>
       new Promise((resolve, reject) => {
         client.SayHello(
-          { audio_data: audioData, target_language: langParam ?? 0 },
+          { audio_data: audioData, target_language: langParam },
           (error: any, response: any) => {
             if (error) {
               console.error(

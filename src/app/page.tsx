@@ -22,6 +22,7 @@ export default function Home() {
     ));
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log("Selected language:", e.target.value);
     setSelectedLanguage(Number(e.target.value) as LanguageEnum);
   };
 
