@@ -95,8 +95,8 @@ export default function Home() {
             {options}
           </select>
         </div>
-        <p className="font-bold text-4xl">{korean}</p>
-        <p className="font-bold text-4xl">{targetText}</p>
+        <p className="font-bold text-xl">{korean}</p>
+        <p className="font-bold text-xl">{targetText}</p>
       </div>
     </div>
   );
