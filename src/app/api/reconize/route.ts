@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
   const grpcObject = grpc.loadPackageDefinition(packageDefinition);
   const greeterPackage = grpcObject.helloworld as any;
 
+  console.log(greeterPackage);
+
   const client = new greeterPackage.Greeter(
     process.env.GRPC_SERVER_URL || "localhost:50052",
     grpc.credentials.createSsl()
