@@ -1,16 +1,17 @@
-import * as LibSampleRate from "https://cdn.jsdelivr.net/npm/@alexanderolsen/libsamplerate-js/dist/libsamplerate.worklet.js";
-
 class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this.inputSampleRate = sampleRate;
     this.outputSampleRate = 16000;
 
-    this.bufferSize = Math.floor(
-      (8192 * this.inputSampleRate) / this.outputSampleRate
-    );
-    this.buffer = new Float32Array(this.bufferSize);
-    this.bufferOffset = 0;
+    this.inputBufferLength = 8192;
+    this.buffer = new Float32Array(this.inputBufferLength);
+    this.writeIndex = 0;
+
+    this.ringBufferLength = 8192 * 4; // 충분히 큰 링버퍼
+    this.ringBuffer = new Float32Array(this.ringBufferLength);
+    this.readIndex = 0;
+    this.writeRingIndex = 0;
 
     LibSampleRate.create(1, this.inputSampleRate, this.outputSampleRate, {
       converterType: LibSampleRate.ConverterType.SRC_SINC_BEST_QUALITY,
@@ -29,48 +30,51 @@ class AudioProcessor extends AudioWorkletProcessor {
     if (!input.length) return true;
 
     const inputChannelData = input[0];
-    let inputIndex = 0;
 
-    while (inputIndex < inputChannelData.length) {
-      const spaceLeft = this.bufferSize - this.bufferOffset;
-      const copyLength = Math.min(
-        spaceLeft,
-        inputChannelData.length - inputIndex
-      );
-      this.buffer.set(
-        inputChannelData.subarray(inputIndex, inputIndex + copyLength),
-        this.bufferOffset
-      );
-      this.bufferOffset += copyLength;
-      inputIndex += copyLength;
+    // 입력 데이터를 링버퍼에 씀
+    for (let i = 0; i < inputChannelData.length; i++) {
+      this.ringBuffer[this.writeRingIndex] = inputChannelData[i];
+      this.writeRingIndex = (this.writeRingIndex + 1) % this.ringBufferLength;
+    }
 
-      if (this.bufferOffset === this.bufferSize) {
-        let sumSquares = 0;
-        for (let i = 0; i < this.bufferSize; i++) {
-          sumSquares += this.buffer[i] * this.buffer[i];
+    // 버퍼 완성 확인 후 처리
+    while (this.getAvailableReadSamples() >= this.inputBufferLength) {
+      // 링버퍼에서 버퍼크기만큼 데이터 꺼냄
+      for (let i = 0; i < this.inputBufferLength; i++) {
+        this.buffer[i] = this.ringBuffer[this.readIndex];
+        this.readIndex = (this.readIndex + 1) % this.ringBufferLength;
+      }
+
+      let sumSquares = 0;
+      for (let i = 0; i < this.inputBufferLength; i++) {
+        sumSquares += this.buffer[i] * this.buffer[i];
+      }
+      const rms = Math.sqrt(sumSquares / this.inputBufferLength);
+
+      const threshold = parameters.threshold[0];
+      if (rms > threshold) {
+        const resampledData = this.convertor.simple(this.buffer);
+
+        const outBuffer = new ArrayBuffer(resampledData.length * 2);
+        const view = new DataView(outBuffer);
+        for (let i = 0; i < resampledData.length; i++) {
+          let s = Math.max(-1, Math.min(1, resampledData[i]));
+          s = s < 0 ? s * 0x8000 : s * 0x7fff;
+          view.setInt16(i * 2, s, true);
         }
-        const rms = Math.sqrt(sumSquares / this.bufferSize);
-
-        // const threshold = 0.01;
-        const threshold = parameters.threshold[0];
-        if (rms > threshold) {
-          const resampledData = this.convertor.simple(this.buffer);
-
-          const outBuffer = new ArrayBuffer(resampledData.length * 2);
-          const view = new DataView(outBuffer);
-          for (let i = 0; i < resampledData.length; i++) {
-            let s = Math.max(-1, Math.min(1, resampledData[i]));
-            s = s < 0 ? s * 0x8000 : s * 0x7fff;
-            view.setInt16(i * 2, s, true);
-          }
-          this.port.postMessage(new Uint8Array(outBuffer));
-        }
-
-        this.bufferOffset = 0;
+        this.port.postMessage(new Uint8Array(outBuffer));
       }
     }
 
     return true;
+  }
+
+  getAvailableReadSamples() {
+    if (this.writeRingIndex >= this.readIndex) {
+      return this.writeRingIndex - this.readIndex;
+    } else {
+      return this.ringBufferLength - (this.readIndex - this.writeRingIndex);
+    }
   }
 }
 
