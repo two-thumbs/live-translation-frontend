@@ -1,33 +1,16 @@
 "use client";
 
-import {
-  getKeyByValue,
-  LanguageEnum,
-  languageOptions,
-} from "@/enums/LanguageEnum";
+import { LanguageEnum, languageOptions } from "@/enums/LanguageEnum";
+import { instance } from "@/lib/axios";
 import React, { useEffect, useRef, useState } from "react";
 
 export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const [korean, setKorean] = useState<string>();
-  const [selectedLanguage, setSelectedLanguage] = useState<
-    | "ENGLISH"
-    | "JAPANESE"
-    | "SIMPLIFIED_CHINESE"
-    | "TRADITIONAL_CHINESE"
-    | "VIETNAMESE"
-    | "THAI"
-    | "INDONESIAN"
-    | "FRENCH"
-    | "SPANISH"
-    | "RUSSIAN"
-    | "GERMAN"
-    | "ITALIAN"
-  >("ENGLISH");
+  const [selectedLanguage, setSelectedLanguage] =
+    useState<keyof typeof LanguageEnum>("ENGLISH");
   const [targetText, setTargetText] = useState<string>();
-
-  console.log(languageOptions);
 
   const options = languageOptions.map((value) => (
     <option key={value} value={value}>
@@ -57,18 +40,13 @@ export default function Home() {
       workletNodeRef.current = workletNode;
 
       workletNode.port.onmessage = async (event) => {
-        console.log("Speaking");
+        const { data } = await instance.post(
+          `/reconize?lang=${selectedLanguage}`,
+          event.data.buffer
+        );
 
-        const response = await fetch(`/api/reconize?lang=${selectedLanguage}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/octet-stream" },
-          body: event.data.buffer,
-        });
-
-        const body = await response.json();
-
-        setKorean(body.korean);
-        setTargetText(body.target_text);
+        setKorean(data.korean);
+        setTargetText(data.target_text);
       };
 
       source.connect(workletNode);
