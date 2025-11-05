@@ -3,6 +3,13 @@
 import { LanguageEnum } from "@/enums/LanguageEnum";
 import React, { useEffect, useRef, useState } from "react";
 
+function toEnum(value: string): LanguageEnum | undefined {
+  if (value in LanguageEnum) {
+    return LanguageEnum[value as keyof typeof LanguageEnum];
+  }
+  return undefined;
+}
+
 export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
@@ -22,7 +29,7 @@ export default function Home() {
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     console.log("Selected language:", e.target.value);
-    setSelectedLanguage(Number(e.target.value) as LanguageEnum);
+    setSelectedLanguage(toEnum(e.target.value) ?? LanguageEnum.ENGLISH);
   };
 
   useEffect(() => {
