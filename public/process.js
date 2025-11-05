@@ -8,12 +8,15 @@ class AudioProcessor extends AudioWorkletProcessor {
 
     this.inputBufferLength = 8192;
     this.buffer = new Float32Array(this.inputBufferLength);
+    this.readIndex = 0;
     this.writeIndex = 0;
 
-    this.ringBufferLength = 8192 * 4; // 충분히 큰 링버퍼
+    this.ringBufferLength = 8192 * 4;
     this.ringBuffer = new Float32Array(this.ringBufferLength);
-    this.readIndex = 0;
+    this.readRingIndex = 0;
     this.writeRingIndex = 0;
+
+    this.processCallCount = 0; // 호출 횟수 카운트
 
     LibSampleRate.create(1, this.inputSampleRate, this.outputSampleRate, {
       converterType: LibSampleRate.ConverterType.SRC_SINC_BEST_QUALITY,
@@ -32,30 +35,40 @@ class AudioProcessor extends AudioWorkletProcessor {
     if (!input.length) return true;
 
     const inputChannelData = input[0];
-
-    // 입력 데이터를 링버퍼에 씀
     for (let i = 0; i < inputChannelData.length; i++) {
       this.ringBuffer[this.writeRingIndex] = inputChannelData[i];
       this.writeRingIndex = (this.writeRingIndex + 1) % this.ringBufferLength;
     }
 
-    // 버퍼 완성 확인 후 처리
-    while (this.getAvailableReadSamples() >= this.inputBufferLength) {
-      // 링버퍼에서 버퍼크기만큼 데이터 꺼냄
-      for (let i = 0; i < this.inputBufferLength; i++) {
-        this.buffer[i] = this.ringBuffer[this.readIndex];
-        this.readIndex = (this.readIndex + 1) % this.ringBufferLength;
+    this.processCallCount++;
+
+    const threshold = parameters.threshold[0];
+    // 최소 프레임 수 또는 버퍼가 꽉 찼을 때 처리
+    if (
+      this.getAvailableReadSamples() >= this.inputBufferLength ||
+      this.processCallCount >= 50
+    ) {
+      const samplesToRead = Math.min(
+        this.getAvailableReadSamples(),
+        this.inputBufferLength
+      );
+      for (let i = 0; i < samplesToRead; i++) {
+        this.buffer[i] = this.ringBuffer[this.readRingIndex];
+        this.readRingIndex = (this.readRingIndex + 1) % this.ringBufferLength;
       }
+
+      this.processCallCount = 0; // 카운트 초기화
 
       let sumSquares = 0;
-      for (let i = 0; i < this.inputBufferLength; i++) {
+      for (let i = 0; i < samplesToRead; i++) {
         sumSquares += this.buffer[i] * this.buffer[i];
       }
-      const rms = Math.sqrt(sumSquares / this.inputBufferLength);
+      const rms = Math.sqrt(sumSquares / samplesToRead);
 
-      const threshold = parameters.threshold[0];
-      if (rms > threshold) {
-        const resampledData = this.convertor.simple(this.buffer);
+      if (rms > threshold || samplesToRead === this.inputBufferLength) {
+        const resampledData = this.convertor.simple(
+          this.buffer.subarray(0, samplesToRead)
+        );
 
         const outBuffer = new ArrayBuffer(resampledData.length * 2);
         const view = new DataView(outBuffer);
@@ -72,10 +85,10 @@ class AudioProcessor extends AudioWorkletProcessor {
   }
 
   getAvailableReadSamples() {
-    if (this.writeRingIndex >= this.readIndex) {
-      return this.writeRingIndex - this.readIndex;
+    if (this.writeRingIndex >= this.readRingIndex) {
+      return this.writeRingIndex - this.readRingIndex;
     } else {
-      return this.ringBufferLength - (this.readIndex - this.writeRingIndex);
+      return this.ringBufferLength - (this.readRingIndex - this.writeRingIndex);
     }
   }
 }
