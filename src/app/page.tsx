@@ -48,14 +48,11 @@ export default function Home() {
 
         console.log("Speaking");
 
-        const response = await fetch(
-          `/proto?lang=${selectedLanguage.valueOf()}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/octet-stream" },
-            body: event.data.buffer,
-          }
-        );
+        const response = await fetch(`/proto?lang=${selectedLanguage}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/octet-stream" },
+          body: event.data.buffer,
+        });
 
         const body = await response.json();
         console.log(body);
