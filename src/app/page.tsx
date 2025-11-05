@@ -1,35 +1,42 @@
 "use client";
 
-import { LanguageEnum } from "@/enums/LanguageEnum";
+import {
+  getKeyByValue,
+  LanguageEnum,
+  languageOptions,
+} from "@/enums/LanguageEnum";
 import React, { useEffect, useRef, useState } from "react";
-
-function toEnum(value: string): LanguageEnum | undefined {
-  if (value in LanguageEnum) {
-    return LanguageEnum[value as keyof typeof LanguageEnum];
-  }
-  return undefined;
-}
 
 export default function Home() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const [korean, setKorean] = useState<string>();
-  const [selectedLanguage, setSelectedLanguage] = useState<LanguageEnum>(
-    LanguageEnum.ENGLISH
-  );
+  const [selectedLanguage, setSelectedLanguage] = useState<
+    | "ENGLISH"
+    | "JAPANESE"
+    | "SIMPLIFIED_CHINESE"
+    | "TRADITIONAL_CHINESE"
+    | "VIETNAMESE"
+    | "THAI"
+    | "INDONESIAN"
+    | "FRENCH"
+    | "SPANISH"
+    | "RUSSIAN"
+    | "GERMAN"
+    | "ITALIAN"
+  >("ENGLISH");
   const [targetText, setTargetText] = useState<string>();
 
-  const languageOptions = Object.entries(LanguageEnum)
-    .filter(([key, value]) => typeof value === "number")
-    .map(([key, value]) => (
-      <option key={value} value={value}>
-        {key}
-      </option>
-    ));
+  console.log(languageOptions);
+
+  const options = languageOptions.map((value) => (
+    <option key={value} value={value}>
+      {value}
+    </option>
+  ));
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log("Selected language:", e.target.value);
-    setSelectedLanguage(toEnum(e.target.value) ?? LanguageEnum.ENGLISH);
+    setSelectedLanguage(e.target.value as typeof selectedLanguage);
   };
 
   useEffect(() => {
@@ -59,7 +66,6 @@ export default function Home() {
         });
 
         const body = await response.json();
-        console.log(body);
 
         setKorean(body.korean);
         setTargetText(body.target_text);
@@ -86,7 +92,7 @@ export default function Home() {
           value={selectedLanguage}
           onChange={handleChange}
         >
-          {languageOptions}
+          {options}
         </select>
 
         <p>Selected language enum value: {selectedLanguage}</p>
