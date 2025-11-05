@@ -59,7 +59,7 @@ export default function Home() {
       workletNode.port.onmessage = async (event) => {
         console.log("Speaking");
 
-        const response = await fetch(`/reconize?lang=${selectedLanguage}`, {
+        const response = await fetch(`/api/reconize?lang=${selectedLanguage}`, {
           method: "POST",
           headers: { "Content-Type": "application/octet-stream" },
           body: event.data.buffer,
