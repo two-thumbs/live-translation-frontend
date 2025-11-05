@@ -17,7 +17,13 @@ class AudioProcessor extends AudioWorkletProcessor {
     }).then((src) => (this.convertor = src));
   }
 
-  process(inputs) {
+  static get parameterDescriptors() {
+    return [
+      { name: "threshold", defaultValue: 0.001, minValue: 0, maxValue: 0.05 },
+    ];
+  }
+
+  process(inputs, outputs, parameters) {
     if (!this.convertor) return true;
     const input = inputs[0];
     if (!input.length) return true;
@@ -39,16 +45,26 @@ class AudioProcessor extends AudioWorkletProcessor {
       inputIndex += copyLength;
 
       if (this.bufferOffset === this.bufferSize) {
-        const resampledData = this.convertor.simple(this.buffer);
-
-        const outBuffer = new ArrayBuffer(resampledData.length * 2);
-        const view = new DataView(outBuffer);
-        for (let i = 0; i < resampledData.length; i++) {
-          let s = Math.max(-1, Math.min(1, resampledData[i]));
-          s = s < 0 ? s * 0x8000 : s * 0x7fff;
-          view.setInt16(i * 2, s, true);
+        let sumSquares = 0;
+        for (let i = 0; i < this.bufferSize; i++) {
+          sumSquares += this.buffer[i] * this.buffer[i];
         }
-        this.port.postMessage(new Uint8Array(outBuffer));
+        const rms = Math.sqrt(sumSquares / this.bufferSize);
+
+        // const threshold = 0.01;
+        const threshold = parameters.threshold[0];
+        if (rms > threshold) {
+          const resampledData = this.convertor.simple(this.buffer);
+
+          const outBuffer = new ArrayBuffer(resampledData.length * 2);
+          const view = new DataView(outBuffer);
+          for (let i = 0; i < resampledData.length; i++) {
+            let s = Math.max(-1, Math.min(1, resampledData[i]));
+            s = s < 0 ? s * 0x8000 : s * 0x7fff;
+            view.setInt16(i * 2, s, true);
+          }
+          this.port.postMessage(new Uint8Array(outBuffer));
+        }
 
         this.bufferOffset = 0;
       }
