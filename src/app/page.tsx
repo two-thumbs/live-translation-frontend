@@ -72,7 +72,7 @@ export default function Home() {
       workletNodeRef.current?.disconnect();
       audioContextRef.current?.close();
     };
-  }, []);
+  }, [selectedLanguage]);
 
   const data = {
     labels: audioData.map((_, i) => i),
