@@ -1,3 +1,5 @@
+import * as LibSampleRate from "https://cdn.jsdelivr.net/npm/@alexanderolsen/libsamplerate-js/dist/libsamplerate.worklet.js";
+
 class AudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
