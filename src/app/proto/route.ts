@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
           { audio_data: audioData },
           (error: any, response: any) => {
             if (error) {
-              console.error(error);
+              console.error(
+                `gRPC Error - Code: ${error.code}, Message: ${error.message}`
+              );
               reject(error); // Reject promise on error to trigger catch block
             } else {
               console.log("Response:", response);
