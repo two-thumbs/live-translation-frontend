@@ -12,25 +12,40 @@ option java_multiple_files = true;
 option java_outer_classname = "HelloWorldProto";
 option java_package = "io.grpc.examples.helloworld";
 
-// The greeting service definition.
+enum LanguageEnum {
+  ENGLISH = 0;
+  JAPANESE = 1;
+  SIMPLIFIED_CHINESE = 2;
+  TRADITIONAL_CHINESE = 3;
+  VIETNAMESE = 4;
+  THAI = 5;
+  INDONESIAN = 6;
+  FRENCH = 7;
+  SPANISH = 8;
+  RUSSIAN = 9;
+  GERMAN = 10;
+  ITALIAN = 11;
+}
+
 service Greeter {
-  // Sends a greeting
   rpc SayHello(HelloRequest) returns (HelloReply) {}
 }
 
-// The request message containing the user's name.
 message HelloRequest {
   bytes audio_data = 1;
+  LanguageEnum target_language = 2;
 }
 
-// The response message containing the greetings
 message HelloReply {
   string korean = 1;
-  string english = 2;
+  string target_text = 2;
 }
 `;
 
 export async function POST(request: NextRequest) {
+  const url = new URL(request.url);
+  const langParam = url.searchParams.get("lang");
+
   const packageDefinition = protoLoader.fromJSON(
     protobuf.parse(protoStr, { keepCase: true }).root,
     {
@@ -46,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   const client = new greeterPackage.Greeter(
     process.env.GRPC_SERVER_URL || "localhost:50052",
-    grpc.credentials.createSsl()
+    grpc.credentials.createInsecure()
   );
 
   try {
@@ -56,16 +71,16 @@ export async function POST(request: NextRequest) {
     const sayHello = (): Promise<{ korean: string; english: string }> =>
       new Promise((resolve, reject) => {
         client.SayHello(
-          { audio_data: audioData },
+          { audio_data: audioData, target_language: langParam ?? 0 },
           (error: any, response: any) => {
             if (error) {
               console.error(
                 `gRPC Error - Code: ${error.code}, Message: ${error.message}`
               );
-              reject(error); // Reject promise on error to trigger catch block
+              reject(error);
             } else {
               console.log("Response:", response);
-              resolve(response); // Resolve promise with response
+              resolve(response);
             }
           }
         );

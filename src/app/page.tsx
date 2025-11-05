@@ -1,5 +1,6 @@
 "use client";
 
+import { LanguageEnum } from "@/enums/LanguageEnum";
 import React, { useEffect, useRef, useState } from "react";
 
 export default function Home() {
@@ -7,7 +8,22 @@ export default function Home() {
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const [audioData, setAudioData] = useState<number[]>([]);
   const [korean, setKorean] = useState<string>();
-  const [english, setEnglish] = useState<string>();
+  const [selectedLanguage, setSelectedLanguage] = useState<LanguageEnum>(
+    LanguageEnum.ENGLISH
+  );
+  const [targetText, setTargetText] = useState<string>();
+
+  const languageOptions = Object.entries(LanguageEnum)
+    .filter(([key, value]) => typeof value === "number")
+    .map(([key, value]) => (
+      <option key={value} value={value}>
+        {key}
+      </option>
+    ));
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedLanguage(Number(e.target.value) as LanguageEnum);
+  };
 
   useEffect(() => {
     const startRecording = async () => {
@@ -32,17 +48,20 @@ export default function Home() {
 
         console.log("Speaking");
 
-        const response = await fetch("/proto", {
-          method: "POST",
-          headers: { "Content-Type": "application/octet-stream" },
-          body: event.data.buffer,
-        });
+        const response = await fetch(
+          `/proto?lang=${selectedLanguage.valueOf()}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/octet-stream" },
+            body: event.data.buffer,
+          }
+        );
 
         const body = await response.json();
         console.log(body);
 
         setKorean(body.korean);
-        setEnglish(body.english);
+        setTargetText(body.target_text);
       };
 
       source.connect(workletNode);
@@ -73,9 +92,22 @@ export default function Home() {
 
   return (
     <div className="h-screen grid">
+      <div>
+        <label htmlFor="language-select">Choose a language:</label>
+        <select
+          id="language-select"
+          value={selectedLanguage}
+          onChange={handleChange}
+        >
+          {languageOptions}
+        </select>
+
+        <p>Selected language enum value: {selectedLanguage}</p>
+      </div>
+
       <div className="m-auto">
         <p className="font-bold text-4xl">{korean}</p>
-        <p className="font-bold text-4xl">{english}</p>
+        <p className="font-bold text-4xl">{targetText}</p>
       </div>
     </div>
   );
