@@ -83,11 +83,11 @@ export default function Home() {
           </select>
         </div>
       </div>
-      <div className="mx-auto mt-12 mb-2 w-2/3 h-full bg-neutral-900 rounded-md p-2">
-        <p>{korean}</p>
+      <div className="mx-auto mt-12 grid mb-2 w-2/3 h-full bg-neutral-900 rounded-md p-2">
+        <p className="m-auto text-2xl font-semibold">{korean}</p>
       </div>
-      <div className="mx-auto mb-12 w-2/3 h-full bg-neutral-900 rounded-md p-2">
-        <p>{targetText}</p>
+      <div className="mx-auto mb-12 grid w-2/3 h-full bg-neutral-900 rounded-md p-2">
+        <p className="m-auto text-2xl font-semibold">{targetText}</p>
       </div>
     </div>
   );
